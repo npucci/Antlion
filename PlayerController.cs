@@ -21,6 +21,7 @@ public class PlayerController : MonoBehaviour {
 	private GameObject ground; // for referencing collissions with the ground
 	private float digStartX = 0f; // the x position where ants should start digging
 	private float digEndX = 0f; // the x position where ants should start surfacing
+	private int score = 0; 	//used to store the score 
 
 	public float digSpeedY = 5f;
 	public float digDepth = 3f;
@@ -135,6 +136,23 @@ public class PlayerController : MonoBehaviour {
 			moveX = moveX / 2;
 		}
 		transform.Translate (new Vector3 (moveX, 0f, 0f)); 
+	}
+
+	/* Purpose: add up the score the player have and display the score in 
+	 *
+	 * Last Date Modified: February 14, 2017 by skyler
+	*/
+	void OnTriggerEnter2D(Collider2D Coll)
+	{
+		if (Coll.gameObject.name == "item") {
+			score += 1;
+			Destroy (Coll.gameObject);
+
+		} 
+	}
+	public int getscore()
+	{
+		return score;
 	}
 
 	// Purpose: handles descending dig movment of ants
