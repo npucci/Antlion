@@ -7,7 +7,7 @@ public class ScoreControl : MonoBehaviour {
 
 	float score;
 	public Text showscore; //the number showed in the UI
-	public Control player; //to get the player's score
+	public PlayerController player; //to get the player's score
 
 	// Use this for initialization
 	void Start () {
