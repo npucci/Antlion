@@ -4,21 +4,22 @@ using UnityEngine;
 using UnityEngine.UI;
 
 public class ScoreControl : MonoBehaviour {
+	private float score;
+	private PlayerController player; //to get the player's score
 
-	float score;
 	public Text showscore; //the number showed in the UI
-	public PlayerController player; //to get the player's score
 
 	// Use this for initialization
 	void Start () {
+		player = GameObject.Find ("Player").GetComponent<PlayerController> ();
 		score = 0;	//set the original score to be 0
-		showscore.text = score.ToString ();
+		showscore.text = "Score: " + score.ToString ();
 
 	}
 
 	// Update is called once per frame
 	void Update () {
 		score = player.getscore(); 	//getscore() is a public function of the player class 
-		showscore.text = score.ToString();
+		showscore.text = "Score: " + score.ToString();
 	}
 }
