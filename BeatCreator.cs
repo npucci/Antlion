@@ -78,4 +78,4 @@ public class BeatCreator : MonoBehaviour {
 	public bool canJump() {
 		return jump;
 	}
-}
+}//test
