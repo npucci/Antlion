@@ -145,7 +145,7 @@ public class PlayerController : MonoBehaviour {
 	void OnTriggerEnter2D(Collider2D Coll)
 	{
 		if (Coll.gameObject.name == "item") {
-			score += 1.0;
+			score += 1;
 			Destroy (Coll.gameObject);
 
 		} 
