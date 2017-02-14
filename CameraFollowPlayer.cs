@@ -22,5 +22,3 @@ public class CameraFollowPlayer : MonoBehaviour {
 		transform.position = new Vector3 (player.position.x, player.position.y + adjustY, transform.position.z); // adjust camera lower
 	}
 }
-
-// test git
