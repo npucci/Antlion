@@ -132,7 +132,6 @@ public class PlayerController : MonoBehaviour {
 		}
 
 		if (!allAntsAboveSurface() && ant [0].name != "Pavement Ant") {
-			Debug.Log ("slower");
 			moveX = moveX / 2;
 		}
 		transform.Translate (new Vector3 (moveX, 0f, 0f)); 
@@ -142,17 +141,13 @@ public class PlayerController : MonoBehaviour {
 	 *
 	 * Last Date Modified: February 14, 2017 by skyler
 	*/
-	void OnTriggerEnter2D(Collider2D Coll)
-	{
-		if (Coll.gameObject.name == "item") {
-			score += 1;
-			Destroy (Coll.gameObject);
-
-		} 
-	}
 	public int getscore()
 	{
 		return score;
+	}
+
+	public void incrementScore() {
+		score++;
 	}
 
 	// Purpose: handles descending dig movment of ants
@@ -177,6 +172,7 @@ public class PlayerController : MonoBehaviour {
 		}
 	}
 
+	// Purpose: moves all ants to the surface, bit by bit, frame by frame
 	private void toSurface() {
 		float moveY = 0f;
 		float surface = transform.position.y;
@@ -220,6 +216,7 @@ public class PlayerController : MonoBehaviour {
 		}
 	}
 
+	// Purpose: enables/Disables ant colliders with ground colliders when digging
 	private void antCollidersIgnoreGround( bool ignore) {
 		Collider2D[] groundColl = ground.GetComponentsInChildren<Collider2D> ();
 		for (int i = 0; i < ant.Count; i++) {
@@ -239,7 +236,7 @@ public class PlayerController : MonoBehaviour {
 		}
 	}
 
-	// Purpose: Grabs the first ant in line, ant[0], and moves it to back of line
+	// Purpose: grabs the first ant in line, ant[0], and moves it to back of line
 	// by removing it from List and appending back on the List
 	private void swapAnts() {
 		if (ant.Count > 1) {
@@ -250,6 +247,7 @@ public class PlayerController : MonoBehaviour {
 		}
 	}
 
+	// Purpose: checks if all Player's ants are above surface
 	private bool allAntsAboveSurface() {
 		for (int i = 0; i < ant.Count; i++) {
 			if (ant [i].transform.position.y < transform.position.y) {
@@ -259,11 +257,13 @@ public class PlayerController : MonoBehaviour {
 		return true;
 	}
 
+	// Purpose: initializes all Player's ants so that their colliders ignore each other for when they swap.
 	private void initializeAnts() {
 		for (int i = 0; i < ant.Count; i++) {
 			for (int j = i + 1; j < ant.Count; j++) {
 				Physics2D.IgnoreCollision (ant[i].GetComponent<Collider2D>(), ant[j].GetComponent<Collider2D>());
 			}
+			//Physics2D.IgnoreCollision (transform.GetComponent<Collider2D>(), ant[i].GetComponent<Collider2D>());
 		}
 	}
 }
