@@ -11,12 +11,13 @@ using System.Collections.Generic;
 using UnityEngine;
 
 public class PlayerController : MonoBehaviour {
-	private bool leftArrow = false; // detect left arrow
-	private bool rightArrow = false; // detect right arrow
-	private bool upArrow = false; // detect up arrow
-	private bool downArrow = false; // detect down arrow
-	private bool eKeyDown = false; // detect D key
+	private bool moveLeftButton = false; // detect left arrow or a key
+	private bool moveRightButton = false; // detect right arrow or d key
+	private bool moveUpButton = false; // detect up arrow or w key
+	private bool moveDownButton = false; // detect down arrow or s key
+	private bool attackButton = false; // detect ctrl key
 	private bool isDigging = false; // check to see if ants are digging
+	private bool isChewing = false; // check to see if ants are chewing
 	private List<GameObject> ant = new List<GameObject>(); // dynamic storage for all controllable Ant GameObjects
 	private GameObject ground; // for referencing collissions with the ground
 	private float digStartX = 0f; // the x position where ants should start digging
@@ -52,34 +53,42 @@ public class PlayerController : MonoBehaviour {
 
 		// horizontal movement input checks
 		if (Input.GetAxis ("Horizontal") == -1) {
-			leftArrow = true;
-			rightArrow = false;
+			moveLeftButton = true;
+			moveRightButton = false;
 		} 
 
 		else if (Input.GetAxis ("Horizontal") == 1) {
-			rightArrow = true;
-			leftArrow = false;
+			moveRightButton = true;
+			moveLeftButton = false;
 		} 
 
 		else {
-			leftArrow = false;
-			rightArrow = false;
+			moveLeftButton = false;
+			moveRightButton = false;
 		}
 
 		// vertical movement input checks
 		if (Input.GetAxis ("Vertical") == -1) { 
-			downArrow = true;
-			upArrow = false;
+			moveDownButton = true;
+			moveUpButton = false;
 		}
 
 		else if (Input.GetAxis ("Vertical") == 1) {
-			upArrow = true;
-			downArrow = false;
+			moveUpButton = true;
+			moveDownButton = false;
+		} 
+
+		else if (Input.GetKeyDown(KeyCode.LeftControl)) {
+			attackButton = true;
+		}
+
+		else if (Input.GetKeyUp(KeyCode.LeftControl)) {
+			attackButton = false;
 		}
 
 		else {
-			downArrow = false;
-			upArrow = false;
+			moveDownButton = false;
+			moveUpButton = false;
 		}
 
 		// action key input checks
@@ -97,31 +106,42 @@ public class PlayerController : MonoBehaviour {
 	void FixedUpdate() {
 		float moveX = 0f;
 
-		if (leftArrow) {
+		if ( moveLeftButton) {
 			moveX = -speedX * Time.deltaTime;
 		} 
 
-		else if (rightArrow) {
+		else if (!leadAntStuck() && moveRightButton) {
 			moveX = speedX * Time.deltaTime;
 		} 
 
-		if (downArrow && allAntsAboveSurface ()) {
+		// Start digging
+		if (moveDownButton && allAntsAboveSurface ()) {
 			digStartX = ant [0].transform.position.x;
 			isDigging = true;
 			antCollidersIgnoreGround (true); // disable ant colliders to ignore all ground colliders
 		} 
 
-		else if (upArrow) {
+		// Start surfacing
+		else if (moveUpButton) {
 			if (isDigging) {
 				digEndX = ant [0].transform.position.x;
 			}
 			isDigging = false;	
+		} 
+
+		else if (attackButton && leadAntStuckTree()) {
+			if (ant [0].name.Contains ("Carpenter Ant")) {
+				moveX = speedX * Time.deltaTime;
+				Collider2D blockingObstacleColl = ant [0].GetComponent<AntCollider> ().getBlocingObstacleColl();
+				antCollidersIgnoreBlockingObstacle (blockingObstacleColl, true);
+			}
 		}
 
 		if (isDigging) {
 			dig ();
 			positionAnts ();
 		} 
+
 
 		else {
 			if (allAntsAboveSurface ()) {
@@ -148,6 +168,11 @@ public class PlayerController : MonoBehaviour {
 
 	public void incrementScore() {
 		score++;
+	}
+
+	// Purpose: handles chewing through tree
+	private void chewThrough() {
+
 	}
 
 	// Purpose: handles descending dig movment of ants
@@ -199,8 +224,9 @@ public class PlayerController : MonoBehaviour {
 	// Purpose: checks and moves ants to their ordered positions in a straight line, 
 	private void positionAnts() {
 		float bufferSpace = 0.1f; // gives ants a certain range of space they are allowed to be within
+		bool leadAntStuck = ant [0].GetComponent<AntCollider> ().isStuck ();
 
-		for (int i = 0; i < ant.Count; i++) {
+		for (int i = 0; i < ant.Count && !leadAntStuck; i++) {
 			float idealDistanceX = (transform.position.x - (distanceBetweenAnts * i)); // calculates the ideal x distance of each ant, relative to its parent Player
 			float idealDistanceY = (transform.position.y + (distanceBetweenAnts * i)); // calculates the ideal y distance of each ant, relative to its parent Player
 
@@ -217,7 +243,7 @@ public class PlayerController : MonoBehaviour {
 	}
 
 	// Purpose: enables/Disables ant colliders with ground colliders when digging
-	private void antCollidersIgnoreGround( bool ignore) {
+	private void antCollidersIgnoreGround(bool ignore) {
 		Collider2D[] groundColl = ground.GetComponentsInChildren<Collider2D> ();
 		for (int i = 0; i < ant.Count; i++) {
 			for (int j = 0; j < groundColl.Length; j++) {
@@ -233,6 +259,13 @@ public class PlayerController : MonoBehaviour {
 				rb.gravityScale = 1f;
 				rb.freezeRotation = false;
 			}
+		}
+	}
+
+	// Purpose: enables/Disables ant colliders with collider of blocking obstacle
+	private void antCollidersIgnoreBlockingObstacle(Collider2D blockingObstacleColl, bool ignore) {
+		for (int i = 0; i < ant.Count; i++) {
+			Physics2D.IgnoreCollision (ant [i].GetComponent<Collider2D> (), blockingObstacleColl, ignore);
 		}
 	}
 
@@ -265,5 +298,25 @@ public class PlayerController : MonoBehaviour {
 			}
 			//Physics2D.IgnoreCollision (transform.GetComponent<Collider2D>(), ant[i].GetComponent<Collider2D>());
 		}
+	}
+
+	private bool leadAntStuck() {
+		return ant [0].GetComponent<AntCollider> ().isStuck ();
+	}
+
+	private bool leadAntStuckTree() {
+		Collider2D blockingObstacleColl = ant [0].GetComponent<AntCollider> ().getBlocingObstacleColl ();
+		if (blockingObstacleColl != null && blockingObstacleColl.name.Contains ("Tree Obstacle")) {
+			return true;
+		}
+		return false;
+	}
+
+	private bool noAntStuck() {
+		for (int i = 0; i < ant.Count; i++) {
+			if (ant [i].GetComponent<AntCollider> ().isStuck ())
+				return false;
+		}
+		return true;
 	}
 }
