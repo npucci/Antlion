@@ -17,7 +17,6 @@ public class PlayerController : MonoBehaviour {
 	private bool moveDownButton = false; // detect down arrow or s key
 	private bool attackButton = false; // detect ctrl key
 	private bool isDigging = false; // check to see if ants are digging
-	private bool isChewing = false; // check to see if ants are chewing
 	private List<GameObject> ant = new List<GameObject>(); // dynamic storage for all controllable Ant GameObjects
 	private GameObject ground; // for referencing collissions with the ground
 	private float digStartX = 0f; // the x position where ants should start digging
