@@ -143,12 +143,10 @@ public class PlayerController : MonoBehaviour {
 				throwThrowableObject ();
 				pickUpThrowableObject ();
 				attackButton = false;
-				Debug.Log ("Picked up new " + throwableObject.name + "!"); 
 			}
 
 			else if (attackButton && throwableObject != null) {
 				throwThrowableObject ();
-				Debug.Log ("Threw old!"); 
 			}
 		}
 
