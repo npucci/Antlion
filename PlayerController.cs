@@ -18,6 +18,7 @@ public class PlayerController : MonoBehaviour {
 	private bool attackButton = false; // detect ctrl key
 	private bool isDigging = false; // check to see if ants are digging
 	private List<GameObject> ant = new List<GameObject>(); // dynamic storage for all controllable Ant GameObjects
+	private GameObject throwableObject = null;
 	private GameObject ground; // for referencing collissions with the ground
 	private float digStartX = 0f; // the x position where ants should start digging
 	private float digEndX = 0f; // the x position where ants should start surfacing
@@ -28,7 +29,7 @@ public class PlayerController : MonoBehaviour {
 	public float speedX = 6.0f; // speed at which ants move on the x-axis
 	public float distanceBetweenAnts = 1.5f; // defined distance between each ant in the party
 
-	/* Purpose: called once at object instantiation, for setting values
+	/* Purpose: called once at object instantiation, for initializing fields
 	 * NOTE: any public values that are modified in the Unity editor will get that value overwritten
 	 * if reassigned with this method
 	 *
@@ -128,11 +129,26 @@ public class PlayerController : MonoBehaviour {
 			isDigging = false;	
 		} 
 
-		else if (attackButton && leadAntStuckTree()) {
-			if (ant [0].name.Contains ("Carpenter Ant")) {
+		else if (ant [0].name.Contains ("Carpenter Ant")) {
+			if (attackButton && isLeadAntStuck ("Tree Obstacle")) {
 				moveX = speedX * Time.deltaTime;
-				Collider2D blockingObstacleColl = ant [0].GetComponent<AntCollider> ().getBlocingObstacleColl();
+				Collider2D blockingObstacleColl = ant [0].GetComponent<AntCollider> ().getBlocingObstacleColl ();
 				antCollidersIgnoreBlockingObstacle (blockingObstacleColl, true);
+			}
+		} 
+
+		else if (ant [0].name.Contains ("Fire Ant")) {
+			// if throwable object is in forn of lead ant, thow away any existing object being carried, and grab the new one
+			if (attackButton && isLeadAntStuck ("Bug Obstacle")) {
+				throwThrowableObject ();
+				pickUpThrowableObject ();
+				attackButton = false;
+				Debug.Log ("Picked up new " + throwableObject.name + "!"); 
+			}
+
+			else if (attackButton && throwableObject != null) {
+				throwThrowableObject ();
+				Debug.Log ("Threw old!"); 
 			}
 		}
 
@@ -167,11 +183,6 @@ public class PlayerController : MonoBehaviour {
 
 	public void incrementScore() {
 		score++;
-	}
-
-	// Purpose: handles chewing through tree
-	private void chewThrough() {
-
 	}
 
 	// Purpose: handles descending dig movment of ants
@@ -220,10 +231,12 @@ public class PlayerController : MonoBehaviour {
 		}
 	}
 		
-	// Purpose: checks and moves ants to their ordered positions in a straight line, 
+	// Purpose: checks and moves ants to their ordered positions in a straight line, and appends trowable objects at very back 
 	private void positionAnts() {
 		float bufferSpace = 0.1f; // gives ants a certain range of space they are allowed to be within
 		bool leadAntStuck = ant [0].GetComponent<AntCollider> ().isStuck ();
+		bool fireAntExists = false;
+		Vector3 fireAntPosition = Vector3.zero;
 
 		for (int i = 0; i < ant.Count && !leadAntStuck; i++) {
 			float idealDistanceX = (transform.position.x - (distanceBetweenAnts * i)); // calculates the ideal x distance of each ant, relative to its parent Player
@@ -238,26 +251,66 @@ public class PlayerController : MonoBehaviour {
 			else if (ant [i].transform.position.x > idealDistanceX + bufferSpace) {
 				ant [i].transform.Translate (-speedX * Time.deltaTime, 0f, 0f); // move ant backwards
 			}
+
+			if (ant [i].name.Contains ("Fire Ant")) {
+				fireAntPosition = ant [i].transform.position;
+				fireAntExists = true;
+			}
+		}
+
+		// move throwable object to position of fire ant, if it exists
+		if (throwableObject != null && fireAntExists) {
+			throwableObject.GetComponent<SpriteRenderer> ().flipY = true;
+
+			// check if throwable object is too far back from fire ant
+			if (throwableObject.transform.position.x < fireAntPosition [0] - bufferSpace) { 
+				throwableObject.transform.Translate (speedX * Time.deltaTime, 0f, 0f);
+			}
+
+			// check if throwable object is too far in front from fire ant
+			else if (throwableObject.transform.position.x > fireAntPosition [0] + bufferSpace) {
+				throwableObject.transform.Translate (-speedX * Time.deltaTime, 0f, 0f);
+			}
+
+			// check if throwable object is too far above fire ant
+			if (throwableObject.transform.position.y > fireAntPosition [1] + bufferSpace) { 
+				throwableObject.transform.Translate (0f, -digSpeedY * Time.deltaTime, 0f);
+			}
+
+			// check if throwable object is too far below fire ant
+			else if (throwableObject.transform.position.y < fireAntPosition [1] - bufferSpace) {
+				throwableObject.transform.Translate (0f, digSpeedY * Time.deltaTime, 0f);
+			}
 		}
 	}
 
 	// Purpose: enables/Disables ant colliders with ground colliders when digging
 	private void antCollidersIgnoreGround(bool ignore) {
-		Collider2D[] groundColl = ground.GetComponentsInChildren<Collider2D> ();
 		for (int i = 0; i < ant.Count; i++) {
-			for (int j = 0; j < groundColl.Length; j++) {
-				Physics2D.IgnoreCollision (ant [i].GetComponent<Collider2D> (), groundColl [j], ignore);
-			}
-			Rigidbody2D rb = ant[i].GetComponent<Rigidbody2D> ();
-			if (ignore) {
-				rb.gravityScale = 0f;
-				rb.freezeRotation = true;
-			} 
+			objectColliderIgnoreGround (ant [i], ignore);
+		}
+	}
 
-			else {
-				rb.gravityScale = 1f;
-				rb.freezeRotation = false;
-			}
+	private void throwableObjectColliderIgnoreGround(bool ignore) {
+		if(throwableObject != null) {
+			objectColliderIgnoreGround (throwableObject, ignore);
+		}
+	}
+
+	private void objectColliderIgnoreGround(GameObject objectWithCollider, bool ignore) {
+		Collider2D[] groundColliders = ground.GetComponentsInChildren<Collider2D> ();
+		for (int i = 0; i < groundColliders.Length; i++) {
+			Physics2D.IgnoreCollision (objectWithCollider.GetComponent<Collider2D> (), groundColliders [i], ignore);
+		}
+		Rigidbody2D rb = objectWithCollider.GetComponent<Rigidbody2D> ();
+		if (ignore) {
+			rb.gravityScale = 0f;
+			rb.freezeRotation = true;
+		} 
+
+		else {
+			rb.gravityScale = 1f;
+			rb.freezeRotation = false;
 		}
 	}
 
@@ -265,6 +318,24 @@ public class PlayerController : MonoBehaviour {
 	private void antCollidersIgnoreBlockingObstacle(Collider2D blockingObstacleColl, bool ignore) {
 		for (int i = 0; i < ant.Count; i++) {
 			Physics2D.IgnoreCollision (ant [i].GetComponent<Collider2D> (), blockingObstacleColl, ignore);
+		}
+
+		if (throwableObject != null) {
+			Physics2D.IgnoreCollision (throwableObject.GetComponent<Collider2D> (), blockingObstacleColl, ignore);
+		}
+	}
+
+	private void pickUpThrowableObject() {
+		throwableObject = ant[0].GetComponent<AntCollider>().getBlocingObstacleColl().gameObject;
+		antCollidersIgnoreBlockingObstacle (throwableObject.GetComponent<Collider2D>(), true);
+		throwableObjectColliderIgnoreGround (true);
+	}
+
+	private void throwThrowableObject() {
+		if (throwableObject != null && throwableObject.transform.position.y >= transform.position.y) {
+			throwableObjectColliderIgnoreGround (false);
+			throwableObject.GetComponent<Rigidbody2D> ().AddForce (new Vector2 (-10f, 5f), ForceMode2D.Impulse);
+			throwableObject = null;
 		}
 	}
 
@@ -295,7 +366,6 @@ public class PlayerController : MonoBehaviour {
 			for (int j = i + 1; j < ant.Count; j++) {
 				Physics2D.IgnoreCollision (ant[i].GetComponent<Collider2D>(), ant[j].GetComponent<Collider2D>());
 			}
-			//Physics2D.IgnoreCollision (transform.GetComponent<Collider2D>(), ant[i].GetComponent<Collider2D>());
 		}
 	}
 
@@ -303,14 +373,14 @@ public class PlayerController : MonoBehaviour {
 		return ant [0].GetComponent<AntCollider> ().isStuck ();
 	}
 
-	private bool leadAntStuckTree() {
+	private bool isLeadAntStuck(string obstacleName) {
 		Collider2D blockingObstacleColl = ant [0].GetComponent<AntCollider> ().getBlocingObstacleColl ();
-		if (blockingObstacleColl != null && blockingObstacleColl.name.Contains ("Tree Obstacle")) {
+		if (blockingObstacleColl != null && blockingObstacleColl.name.Contains (obstacleName)) {
 			return true;
 		}
 		return false;
 	}
-
+		
 	private bool noAntStuck() {
 		for (int i = 0; i < ant.Count; i++) {
 			if (ant [i].GetComponent<AntCollider> ().isStuck ())
