@@ -23,7 +23,7 @@ public class AntCollider : MonoBehaviour {
 
 	private void OnCollisionStay2D(Collision2D coll) {
 		string collName = coll.gameObject.name;
-		if (collName.Contains("Tree Obstacle") || collName.Contains("Rock Obstacle")) {
+		if (collName.Contains("Tree Obstacle") || collName.Contains("Rock Obstacle") || collName.Contains("Bug Obstacle")) {
 			if (transform.position.y >= coll.gameObject.transform.position.y - 2f) {
 				blockingObstacleColl = coll.gameObject.GetComponent<Collider2D> ();
 			}
@@ -33,7 +33,7 @@ public class AntCollider : MonoBehaviour {
 	private void OnCollisionExit2D(Collision2D coll) {
 		string collName = coll.gameObject.name;
 
-		if (collName.Contains("Tree Obstacle") || collName.Contains("Rock Obstacle")) {
+		if (collName.Contains("Tree Obstacle") || collName.Contains("Rock Obstacle") || collName.Contains("Bug Obstacle")) {
 			blockingObstacleColl = null;
 		}
 	}
