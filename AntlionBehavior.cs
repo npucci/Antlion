@@ -18,7 +18,6 @@ public class AntlionBehavior : MonoBehaviour {
 		antlionCharacter = transform.GetChild (0).gameObject;
 		player = GameObject.Find ("Player").GetComponent<Transform> ().gameObject;
 		ground = GameObject.Find ("Ground").GetComponent<Transform>().gameObject;
-		//transform.GetComponent<Rigidbody2D>().constraints = RigidbodyConstraints2D.FreezeAll;
 		initializeIgnoreColliders (); 
 		animator = antlionCharacter.GetComponent<Animator> ();
 		animator.speed = 1;
@@ -115,6 +114,10 @@ public class AntlionBehavior : MonoBehaviour {
 	public void setEating(bool isEating) {
 		eating = isEating;
 		countDownTimer = eatingTime;
+	}
+
+	public bool isEating() {
+		return eating;
 	}
 
 	public void enableAntlionCharacterCollider(GameObject thrownObject) {

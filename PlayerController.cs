@@ -244,7 +244,6 @@ public class PlayerController : MonoBehaviour {
 
 		for (int i = 0; i < ant.Count && !leadAntStuck; i++) {
 			float idealDistanceX = (transform.position.x - (distanceBetweenAnts * i)); // calculates the ideal x distance of each ant, relative to its parent Player
-			float idealDistanceY = (transform.position.y + (distanceBetweenAnts * i)); // calculates the ideal y distance of each ant, relative to its parent Player
 
 			// check x positioning - too far back from ideal position
 			if (ant [i].transform.position.x < idealDistanceX - bufferSpace) {
@@ -256,10 +255,12 @@ public class PlayerController : MonoBehaviour {
 				ant [i].transform.Translate (-speedX * Time.deltaTime, 0f, 0f); // move ant backwards
 			}
 
+			// check that is used for throwable object positioning
 			if (ant [i].name.Contains ("Fire Ant")) {
 				fireAntPosition = ant [i].transform.position;
 				fireAntExists = true;
 			}
+
 		}
 
 		// move throwable object to position of fire ant, if it exists
@@ -285,7 +286,7 @@ public class PlayerController : MonoBehaviour {
 			else if (throwableObject.transform.position.y < fireAntPosition [1] - bufferSpace) {
 				throwableObject.transform.Translate (0f, digSpeedY * Time.deltaTime, 0f);
 			}
-		}
+		} 
 	}
 
 	// Purpose: enables/Disables ant colliders with ground colliders when digging
