@@ -19,7 +19,13 @@ public class ScoreControl : MonoBehaviour {
 
 	// Update is called once per frame
 	void Update () {
-		score = player.getscore(); 	//getscore() is a public function of the player class 
-		showscore.text = "Score: " + score.ToString();
+		if (player != null) {
+			score = player.getscore (); 	//getscore() is a public function of the player class 
+			showscore.text = "Score: " + score.ToString ();
+		}
+
+		if(player.GetComponent<PlayerController>().allAntsEaten()) {
+			// GAME OVER
+		}
 	}
 }

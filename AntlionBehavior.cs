@@ -116,4 +116,9 @@ public class AntlionBehavior : MonoBehaviour {
 		eating = isEating;
 		countDownTimer = eatingTime;
 	}
+
+	public void enableAntlionCharacterCollider(GameObject thrownObject) {
+		Collider2D antlionColl = antlionCharacter.GetComponent<Collider2D> ();
+		Physics2D.IgnoreCollision (antlionColl, thrownObject.GetComponent<Collider2D>(), false);
+	}
 }

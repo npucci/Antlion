@@ -26,7 +26,7 @@ public class PlayerController : MonoBehaviour {
 
 	public float digSpeedY = 5f;
 	public float digDepth = 3f;
-	public float speedX = 6.0f; // speed at which ants move on the x-axis
+	public float speedX = 7.0f; // speed at which ants move on the x-axis
 	public float distanceBetweenAnts = 1.5f; // defined distance between each ant in the party
 
 	/* Purpose: called once at object instantiation, for initializing fields
@@ -40,6 +40,7 @@ public class PlayerController : MonoBehaviour {
 		for (int i = 0; i < transform.childCount; i++) {
 			ant.Add(transform.GetChild (i).gameObject); // populate ant List with all children objects within Player GameObject
 		}
+		initializeIgnoreColliders ();
 		initializeAnts ();
 		positionAnts (); // position each ant in straight line with appropriate margins, according to their ordering and position from point
 	}
@@ -52,12 +53,12 @@ public class PlayerController : MonoBehaviour {
 		positionAnts (); // make sure ants have proper margins between them
 
 		// horizontal movement input checks
-		if (Input.GetAxis ("Horizontal") == -1) {
+		if (!allAntsEaten() && Input.GetAxis ("Horizontal") == -1) {
 			moveLeftButton = true;
 			moveRightButton = false;
 		} 
 
-		else if (Input.GetAxis ("Horizontal") == 1) {
+		else if (!allAntsEaten() && Input.GetAxis ("Horizontal") == 1) {
 			moveRightButton = true;
 			moveLeftButton = false;
 		} 
@@ -68,21 +69,21 @@ public class PlayerController : MonoBehaviour {
 		}
 
 		// vertical movement input checks
-		if (Input.GetAxis ("Vertical") == -1) { 
+		if (!allAntsEaten() && Input.GetAxis ("Vertical") == -1) { 
 			moveDownButton = true;
 			moveUpButton = false;
 		}
 
-		else if (Input.GetAxis ("Vertical") == 1) {
+		else if (!allAntsEaten() && Input.GetAxis ("Vertical") == 1) {
 			moveUpButton = true;
 			moveDownButton = false;
 		} 
 
-		else if (Input.GetKeyDown(KeyCode.LeftControl)) {
+		else if (!allAntsEaten() && Input.GetKeyDown(KeyCode.LeftControl)) {
 			attackButton = true;
 		}
 
-		else if (Input.GetKeyUp(KeyCode.LeftControl)) {
+		else if (!allAntsEaten() && Input.GetKeyUp(KeyCode.LeftControl)) {
 			attackButton = false;
 		}
 
@@ -92,7 +93,7 @@ public class PlayerController : MonoBehaviour {
 		}
 
 		// action key input checks
-		if (Input.GetKeyUp (KeyCode.Space) && allAntsAboveSurface()) {
+		if (!allAntsEaten() && Input.GetKeyUp (KeyCode.Space) && allAntsAboveSurface()) {
 			swapAnts (); // move front ant to back of line
 			positionAnts (); // assign ants to new positions in the line
 		}
@@ -106,30 +107,31 @@ public class PlayerController : MonoBehaviour {
 	void FixedUpdate() {
 		float moveX = 0f;
 
-		if ( moveLeftButton) {
-			moveX = -speedX * Time.deltaTime;
-		} 
-
-		else if (!leadAntStuck() && moveRightButton) {
+		if (!leadAntStuck() && true) { //moveRightButton) {
 			moveX = speedX * Time.deltaTime;
 		} 
 
+		if (!allAntsEaten() &&  moveLeftButton) {
+			moveX = moveX/3;
+			//moveX = -speedX * Time.deltaTime;
+		} 
+
 		// Start digging
-		if (moveDownButton && allAntsAboveSurface ()) {
+		if (!allAntsEaten() && moveDownButton && allAntsAboveSurface ()) {
 			digStartX = ant [0].transform.position.x;
 			isDigging = true;
 			antCollidersIgnoreGround (true); // disable ant colliders to ignore all ground colliders
 		} 
 
 		// Start surfacing
-		else if (moveUpButton) {
+		else if (!allAntsEaten() && moveUpButton) {
 			if (isDigging) {
 				digEndX = ant [0].transform.position.x;
 			}
 			isDigging = false;	
 		} 
 
-		else if (ant [0].name.Contains ("Carpenter Ant")) {
+		else if (!allAntsEaten() && ant [0].name.Contains ("Carpenter Ant")) {
 			if (attackButton && isLeadAntStuck ("Tree Obstacle")) {
 				moveX = speedX * Time.deltaTime;
 				Collider2D blockingObstacleColl = ant [0].GetComponent<AntCollider> ().getBlocingObstacleColl ();
@@ -137,34 +139,34 @@ public class PlayerController : MonoBehaviour {
 			}
 		} 
 
-		else if (ant [0].name.Contains ("Fire Ant")) {
+		else if (!allAntsEaten() && ant [0].name.Contains ("Fire Ant")) {
 			// if throwable object is in forn of lead ant, thow away any existing object being carried, and grab the new one
-			if (attackButton && isLeadAntStuck ("Bug Obstacle")) {
+			if (attackButton && isLeadAntStuck ("Throwable Obstacle")) {
 				throwThrowableObject ();
 				pickUpThrowableObject ();
 				attackButton = false;
 			}
 
-			else if (attackButton && throwableObject != null) {
+			else if (!allAntsEaten() && attackButton && throwableObject != null) {
 				throwThrowableObject ();
 			}
 		}
 
-		if (isDigging) {
+		if (!allAntsEaten() && isDigging) {
 			dig ();
 			positionAnts ();
 		} 
 
 
 		else {
-			if (allAntsAboveSurface ()) {
+			if (!allAntsEaten() && allAntsAboveSurface ()) {
 				antCollidersIgnoreGround (false); // re-enable ant colliders to collide all ground colliders
 			}
 				toSurface ();
 				positionAnts ();
 		}
 
-		if (!allAntsAboveSurface() && ant [0].name != "Pavement Ant") {
+		if (!allAntsEaten() && !allAntsAboveSurface() && ant [0].name != "Pavement Ant") {
 			moveX = moveX / 2;
 		}
 		transform.Translate (new Vector3 (moveX, 0f, 0f)); 
@@ -232,7 +234,11 @@ public class PlayerController : MonoBehaviour {
 	// Purpose: checks and moves ants to their ordered positions in a straight line, and appends trowable objects at very back 
 	private void positionAnts() {
 		float bufferSpace = 0.1f; // gives ants a certain range of space they are allowed to be within
-		bool leadAntStuck = ant [0].GetComponent<AntCollider> ().isStuck ();
+		bool leadAntStuck = false;
+		if (!allAntsEaten ()) {
+			leadAntStuck = ant [0].GetComponent<AntCollider> ().isStuck ();
+		}
+
 		bool fireAntExists = false;
 		Vector3 fireAntPosition = Vector3.zero;
 
@@ -333,6 +339,7 @@ public class PlayerController : MonoBehaviour {
 		if (throwableObject != null && throwableObject.transform.position.y >= transform.position.y) {
 			throwableObjectColliderIgnoreGround (false);
 			throwableObject.GetComponent<Rigidbody2D> ().AddForce (new Vector2 (-10f, 5f), ForceMode2D.Impulse);
+			GameObject.Find ("Antlion").GetComponent<AntlionBehavior>().enableAntlionCharacterCollider(throwableObject);
 			throwableObject = null;
 		}
 	}
@@ -368,10 +375,16 @@ public class PlayerController : MonoBehaviour {
 	}
 
 	private bool leadAntStuck() {
-		return ant [0].GetComponent<AntCollider> ().isStuck ();
+		if (!allAntsEaten ()) {
+			return ant [0].GetComponent<AntCollider> ().isStuck ();
+		}
+		return true;
 	}
 
 	private bool isLeadAntStuck(string obstacleName) {
+		if (allAntsEaten ()) {
+			return false;
+		}
 		Collider2D blockingObstacleColl = ant [0].GetComponent<AntCollider> ().getBlocingObstacleColl ();
 		if (blockingObstacleColl != null && blockingObstacleColl.name.Contains (obstacleName)) {
 			return true;
@@ -385,5 +398,61 @@ public class PlayerController : MonoBehaviour {
 				return false;
 		}
 		return true;
+	}
+
+	public Vector2 getLastAntPosition() {
+		if (!allAntsEaten ()) {
+			return ant [ant.Count - 1].transform.position;
+		}
+
+		return Vector2.zero;
+	}
+
+	public GameObject lastAntEaten(GameObject eatenAnt) {
+		GameObject antGoner = null;
+		if (!allAntsEaten() && ant [ant.Count - 1].Equals (eatenAnt)) {
+			antGoner = ant [ant.Count - 1];
+			ant.RemoveAt(ant.Count -1);
+		}
+		return antGoner;
+	}
+
+	public bool allAntsEaten() {
+		return ant.Count == 0;
+	}
+
+	public float getDigStartX() {
+		return digStartX;
+	}
+
+	public float getDigEndX() {
+		return digEndX;
+	}
+
+	private void initializeIgnoreColliders () {
+		Collider2D coll = GetComponent<Collider2D> ();
+		GameObject[] allGameObjects = UnityEngine.Object.FindObjectsOfType<GameObject> ();
+		foreach (GameObject obj in allGameObjects) {
+			if (obj.activeInHierarchy) {
+				Physics2D.IgnoreCollision (coll, obj.GetComponent<Collider2D>(), true);
+			}
+		}
+
+		Collider2D[] groundColliders = ground.GetComponentsInChildren<Collider2D> ();
+		for (int i = 0; i < groundColliders.Length; i++) {
+			Physics2D.IgnoreCollision (coll, groundColliders [i], false);
+		}
+	}
+
+	public bool holdingThrowableObject() {
+		return throwableObject != null;
+	}
+
+	public void destroyThrowableObject () {
+		if (throwableObject != null) {
+			GameObject tempObj = throwableObject;
+			throwableObject = null;
+			Destroy (tempObj);
+		}
 	}
 }
