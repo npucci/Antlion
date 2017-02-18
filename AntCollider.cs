@@ -4,10 +4,12 @@ using UnityEngine;
 
 public class AntCollider : MonoBehaviour {
 	private PlayerController player;
+	private ScoreControl scoreKeeper;
 	private Collider2D blockingObstacleColl;
 
 	void Start() {
-		player = GameObject.Find("Player").GetComponent<PlayerController>();;
+		player = GameObject.Find("Player").GetComponent<PlayerController>();
+		scoreKeeper = GameObject.Find("Level Manager").GetComponent<ScoreControl>();
 		blockingObstacleColl = null;
 	}
 		
@@ -16,7 +18,7 @@ public class AntCollider : MonoBehaviour {
 		string collName = coll.gameObject.name;
 
 		if (collName.Contains("Item")) {
-			player.incrementScore ();
+			scoreKeeper.incrementScore (coll.gameObject.name);
 			Destroy (coll.gameObject);
 		}
 	}

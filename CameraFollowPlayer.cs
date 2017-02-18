@@ -12,6 +12,7 @@ using UnityEngine;
 public class CameraFollowPlayer : MonoBehaviour {
 	private Transform player; // keeps track of Player position
 
+	public float adjustX = -1f;
 	public float adjustY = 0.88f; // adjusts camera to a better position on the y axis 
 
 	void Start () {
@@ -20,6 +21,6 @@ public class CameraFollowPlayer : MonoBehaviour {
 	}
 
 	void Update () {
-		transform.position = new Vector3 (player.position.x, player.position.y + adjustY, transform.position.z); // adjust camera lower
+		transform.position = new Vector3 (player.position.x + adjustX, player.position.y + adjustY, transform.position.z); // adjust camera lower
 	}
 }
