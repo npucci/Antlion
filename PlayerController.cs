@@ -23,8 +23,8 @@ public class PlayerController : MonoBehaviour {
 	private GameObject ground; // for referencing collissions with the ground
 	private float digStartX = 0f; // the x position where ants should start digging
 	private float digEndX = 0f; // the x position where ants should start surfacing
-	private int score = 0; 	// used to store the score 
 	private float bufferSpace = 0.1f; // gives ants a certain range of space they are allowed to be within
+	private ScoreControl scoreKeeper;
 
 	public float digSpeedY = 5f;
 	public float digDepth = 3f;
@@ -38,6 +38,7 @@ public class PlayerController : MonoBehaviour {
 	 * Last Date Modified: February 11, 2017 by NP
 	*/ 
 	void Start () {
+		scoreKeeper = GameObject.Find ("Level Manager").GetComponent<ScoreControl> ();
 		ground = GameObject.Find ("Ground").GetComponent<Transform>().gameObject;
 		for (int i = 0; i < transform.childCount; i++) {
 			ant.Add(transform.GetChild (i).gameObject); // populate ant List with all children objects within Player GameObject
@@ -56,10 +57,10 @@ public class PlayerController : MonoBehaviour {
 		if (start) {
 
 			// horizontal movement input checks
-			if (!allAntsEaten () && Input.GetAxis ("Horizontal") == -1) {
+			if (!allAntsEaten () && Input.GetKeyDown (KeyCode.LeftArrow)) {
 				moveLeftButton = true;
 				moveRightButton = false;
-			} else if (!allAntsEaten () && Input.GetAxis ("Horizontal") == 1) {
+			} else if (!allAntsEaten () && Input.GetKeyDown (KeyCode.RightArrow)) {
 				moveRightButton = true;
 				moveLeftButton = false;
 			} else {
@@ -68,10 +69,10 @@ public class PlayerController : MonoBehaviour {
 			}
 
 			// vertical movement input checks
-			if (!allAntsEaten () && Input.GetAxis ("Vertical") == -1) { 
+			if (!allAntsEaten () && Input.GetKeyDown (KeyCode.DownArrow)) { 
 				moveDownButton = true;
 				moveUpButton = false;
-			} else if (!allAntsEaten () && Input.GetAxis ("Vertical") == 1) {
+			} else if (!allAntsEaten () && Input.GetKeyDown (KeyCode.UpArrow)) {
 				moveUpButton = true;
 				moveDownButton = false;
 			} else if (!allAntsEaten () && Input.GetKeyDown (KeyCode.LeftControl)) {
@@ -99,20 +100,19 @@ public class PlayerController : MonoBehaviour {
 	void FixedUpdate() {
 		// game started
 		if (start) {
-			float moveX = 0f;
-
-			if (!leadAntStuck () && true) { //moveRightButton) {
-				moveX = speedX * Time.deltaTime;
-			} 
+			float moveX = speedX * Time.deltaTime;
 
 			if (!allAntsEaten () && moveLeftButton) {
-				moveX = moveX / 3;
-				//moveX = -speedX * Time.deltaTime;
+				moveX = moveX / 3; // slow down to a third the pace
 			} 
 
 			// Start digging
-			if (!allAntsEaten () && moveDownButton && allAntsAboveSurface ()) {
+			if (!allAntsEaten () && moveDownButton) { //  && allAntsAboveSurface ()
 				digStartX = ant [0].transform.position.x;
+				if (leadAntStuck ()) {
+					 digStartX -= 5.5f; // move the dig start back so that following ants can recuperate
+				} 
+			
 				isDigging = true;
 				antCollidersIgnoreGround (true); // disable ant colliders to ignore all ground colliders
 			} 
@@ -123,13 +123,17 @@ public class PlayerController : MonoBehaviour {
 					digEndX = ant [0].transform.position.x;
 				}
 				isDigging = false;	
-			} else if (!allAntsEaten () && ant [0].name.Contains ("Carpenter Ant")) {
+			} 
+
+			else if (!allAntsEaten () && ant [0].name.Contains ("Carpenter Ant")) {
 				if (attackButton && isLeadAntStuck ("Tree Obstacle")) {
 					moveX = speedX * Time.deltaTime;
 					Collider2D blockingObstacleColl = ant [0].GetComponent<AntCollider> ().getBlocingObstacleColl ();
 					antCollidersIgnoreBlockingObstacle (blockingObstacleColl, true);
 				}
-			} else if (!allAntsEaten () && ant [0].name.Contains ("Fire Ant")) {
+			} 
+
+			else if (!allAntsEaten () && ant [0].name.Contains ("Fire Ant")) {
 				// if throwable object is in forn of lead ant, thow away any existing object being carried, and grab the new one
 				if (attackButton && isLeadAntStuck ("Throwable Obstacle")) {
 					throwThrowableObject ();
@@ -143,7 +147,9 @@ public class PlayerController : MonoBehaviour {
 			if (!allAntsEaten () && isDigging) {
 				dig ();
 				positionAnts ();
-			} else {
+			} 
+
+			else {
 				if (!allAntsEaten () && allAntsAboveSurface ()) {
 					antCollidersIgnoreGround (false); // re-enable ant colliders to collide all ground colliders
 				}
@@ -154,6 +160,16 @@ public class PlayerController : MonoBehaviour {
 			if (!allAntsEaten () && !allAntsAboveSurface () && ant [0].name != "Pavement Ant") {
 				moveX = moveX / 2;
 			}
+
+			// add speed boost if it is being requested of the player
+			if (!leadAntStuck ()) {
+				moveX *= scoreKeeper.getBoost (moveRightButton); // either multiplies a boost if available, or 1
+			} 
+
+			else {
+				moveX = 0f; // if lead ant is stuck, don't move at all
+			}
+
 			transform.Translate (new Vector3 (moveX, 0f, 0f));
 		}
 
@@ -166,28 +182,17 @@ public class PlayerController : MonoBehaviour {
 		}
 	}
 
-	/* Purpose: add up the score the player have and display the score in 
-	 *
-	 * Last Date Modified: February 14, 2017 by skyler
-	*/
-	public int getscore()
-	{
-		return score;
-	}
-
-	public void incrementScore() {
-		score++;
-	}
-
 	// Purpose: handles descending dig movment of ants
 	private void dig() {
 		float moveY = 0f;
 		float maxDepth = transform.position.y - digDepth;
 		for (int i = 0; i < ant.Count; i++) {
-			if (ant[i].transform.position.x >= digStartX && ant [i].transform.position.y > maxDepth) {
+			if (ant [i].transform.position.x >= digStartX && ant [i].transform.position.y > maxDepth) {
 				moveY = -digSpeedY * Time.deltaTime;
 				ant [i].transform.rotation = Quaternion.Euler (0f, 0f, -45f);
-			} else {
+			} 
+
+			else {
 				ant [i].transform.rotation = Quaternion.Euler (0f, 0f, 0f);
 				moveY = 0f;
 			}
@@ -195,8 +200,14 @@ public class PlayerController : MonoBehaviour {
 			if (ant [0].name != "Pavement Ant") { // if front ant is not Pavement Ant, slow down movement
 				moveY = moveY / 2;
 			}
-				
-			ant [i].transform.Translate (new Vector3 (0f, moveY, 0f));
+
+			if (ant [i].transform.position.y < maxDepth) {
+				ant [i].transform.position = new Vector3 (ant [i].transform.position.x, maxDepth, ant [i].transform.position.z);
+			} 
+
+			else {	
+				ant [i].transform.Translate (new Vector3 (0f, moveY, 0f));
+			}
 		}
 	}
 
@@ -368,7 +379,7 @@ public class PlayerController : MonoBehaviour {
 	}
 
 	// Purpose: checks if all Player's ants are above surface
-	private bool allAntsAboveSurface() {
+	public bool allAntsAboveSurface() {
 		for (int i = 0; i < ant.Count; i++) {
 			if (ant [i].transform.position.y < transform.position.y) {
 				return false;
@@ -475,7 +486,9 @@ public class PlayerController : MonoBehaviour {
 
 	public void stopMovement() {
 		start = false;
-		stopAntAnimations ();
+		if (allAntsAboveSurface ()) {
+			stopAntAnimations ();
+		}
 	}
 
 	private void stopAntAnimations () {

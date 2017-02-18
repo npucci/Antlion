@@ -95,21 +95,15 @@ public class AntlionBehavior : MonoBehaviour {
 	private void dig() {
 		float maxDepth = transform.position.y - digDepth;
 		float moveY = 0f;
-		float bufferSpace = 0.2f;
 
-		if (antlionCharacter.transform.position.y > maxDepth + bufferSpace) {
+		if (antlionCharacter.transform.position.y > maxDepth) {
 			moveY = -digSpeedY * Time.deltaTime;
+			antlionCharacter.transform.Translate (0f, moveY, 0f);
 		}
-
-		else if (antlionCharacter.transform.position.y < maxDepth - bufferSpace) {
-			moveY = digSpeedY * Time.deltaTime;
-		}
-
+			
 		else {
-			moveY = 0;
+			antlionCharacter.transform.position = new Vector3 (antlionCharacter.transform.position.x, maxDepth, antlionCharacter.transform.position.z);
 		}
-
-		antlionCharacter.transform.Translate (0f, moveY, 0f);
 	}
 
 	private void antlionCharacterignoreGroundColliders (bool ignore) {
@@ -170,6 +164,11 @@ public class AntlionBehavior : MonoBehaviour {
 	public void enableAntlionCharacterCollider(GameObject thrownObject) {
 		Collider2D antlionColl = antlionCharacter.GetComponent<Collider2D> ();
 		Physics2D.IgnoreCollision (antlionColl, thrownObject.GetComponent<Collider2D>(), false);
+	}
+
+	public void disableAntlionCharacterCollider(GameObject thrownObject) {
+		Collider2D antlionColl = antlionCharacter.GetComponent<Collider2D> ();
+		Physics2D.IgnoreCollision (antlionColl, thrownObject.GetComponent<Collider2D>(), true);
 	}
 
 	private void initializePositionAntlionCharacter() {
