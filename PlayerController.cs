@@ -57,7 +57,7 @@ public class PlayerController : MonoBehaviour {
 		if (start) {
 
 			// horizontal movement input checks
-			if (!allAntsEaten () && Input.GetKeyDown (KeyCode.LeftArrow)) {
+			if (!allAntsEaten () && Input.GetKey (KeyCode.LeftArrow)) {
 				moveLeftButton = true;
 				moveRightButton = false;
 			} else if (!allAntsEaten () && Input.GetKeyDown (KeyCode.RightArrow)) {
@@ -101,10 +101,6 @@ public class PlayerController : MonoBehaviour {
 		// game started
 		if (start) {
 			float moveX = speedX * Time.deltaTime;
-
-			if (!allAntsEaten () && moveLeftButton) {
-				moveX = moveX / 3; // slow down to a third the pace
-			} 
 
 			// Start digging
 			if (!allAntsEaten () && moveDownButton) { //  && allAntsAboveSurface ()
@@ -169,6 +165,11 @@ public class PlayerController : MonoBehaviour {
 			else {
 				moveX = 0f; // if lead ant is stuck, don't move at all
 			}
+
+			if (!allAntsEaten () && moveLeftButton) {
+				Debug.Log ("here");
+				moveX = moveX / 3; // slow down to a third the pace
+			} 
 
 			transform.Translate (new Vector3 (moveX, 0f, 0f));
 		}
