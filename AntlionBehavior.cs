@@ -6,19 +6,25 @@ public class AntlionBehavior : MonoBehaviour {
 	private GameObject antlionCharacter;
 	private GameObject player;
 	private GameObject ground; // for referencing collissions with the ground
-	public float speedX = 3.0f;
-	private bool eating = false;
+	private bool stalled = false;
 	private Animator animator;
 	private float countDownTimer = 0f;
 	private bool gameOver = false;
 	private bool start = false;
+	private float digDepth;
+	private bool digging = false;
 
+	public float speedX = 5.0f;
+	public float digSpeedX = 10.0f;
+	public float digSpeedY = 10.0f;
 	public float eatingTime = 2f;
 
 	void Start () {
 		antlionCharacter = transform.GetChild (0).gameObject;
 		initializePositionAntlionCharacter ();
 		player = GameObject.Find ("Player").GetComponent<Transform> ().gameObject;
+		digDepth = player.GetComponent<PlayerController> ().getDigDepth ();
+
 		ground = GameObject.Find ("Ground").GetComponent<Transform>().gameObject;
 		initializeIgnoreColliders (); 
 		animator = antlionCharacter.GetComponent<Animator> ();
@@ -33,14 +39,25 @@ public class AntlionBehavior : MonoBehaviour {
 
 			Vector3 playerLastAnt = Vector3.zero;
 
-			if (!eating && !gameOver) {
+			if (!stalled && !gameOver) {
 				playerLastAnt = player.GetComponent<PlayerController> ().getLastAntPosition ();
 
-				if (playerLastAnt [1] < transform.position.y) {
-					//dig ();
+				if (player.GetComponent<PlayerController> ().lastAntDigging ()) {
+					if (digging == false) {
+						digging = true;
+						antlionCharacterignoreGroundColliders (true);
+					}
+					dig ();
 				} 
 
-				else if (playerLastAnt [0] > transform.position.x) {
+				else {
+					if(toSurface()){
+						digging = false;
+						antlionCharacterignoreGroundColliders (false); 
+					}
+				}
+
+				if (playerLastAnt [0] > transform.position.x) {
 					transform.Translate (new Vector3 (speedX * Time.deltaTime, 0f, 0f));
 					moveAntlionCharacter ();
 				}
@@ -48,44 +65,70 @@ public class AntlionBehavior : MonoBehaviour {
 
 			if (countDownTimer > 0 && !gameOver) {
 				countDownTimer = countDownTimer - Time.deltaTime;
-			} else {
-				eating = false;
+			} 
+
+			else {
+				stalled = false;
 			}
 		}
 	}
 
 	private void moveAntlionCharacter() {
 		float bufferSpace = 0.2f;
-		if (antlionCharacter.transform.position.x < transform.position.x - bufferSpace) {
+		if (antlionCharacter.transform.position.x <= transform.position.x - bufferSpace) {
 			antlionCharacter.transform.Translate (new Vector3 (speedX * Time.deltaTime, 0f, 0f));
 		}
-		else if (antlionCharacter.transform.position.x > transform.position.x + bufferSpace) {
+		else if (antlionCharacter.transform.position.x >= transform.position.x + bufferSpace) {
 			antlionCharacter.transform.Translate (new Vector3 (-speedX * Time.deltaTime, 0f, 0f));
 		}
 	}
 		
-	/*
+	private bool toSurface() {
+		//Debug.Log ("here");
+		if (antlionCharacter.transform.position.y < transform.position.y) {
+			antlionCharacter.transform.Translate (new Vector3 (0f, digSpeedY * Time.deltaTime, 0f));
+			return false;
+		} 
+		return true;
+	}
+
 	private void dig() {
-		float moveY = 0f;
 		float maxDepth = transform.position.y - digDepth;
+		float moveY = 0f;
+		float bufferSpace = 0.2f;
 
-		for (int i = 0; i < ant.Count; i++) {
-			if (ant[i].transform.position.x >= digStartX && ant [i].transform.position.y > maxDepth) {
-				moveY = -digSpeedY * Time.deltaTime;
-				ant [i].transform.rotation = Quaternion.Euler (0f, 0f, -45f);
-			} else {
-				ant [i].transform.rotation = Quaternion.Euler (0f, 0f, 0f);
-				moveY = 0f;
-			}
+		if (antlionCharacter.transform.position.y > maxDepth + bufferSpace) {
+			moveY = -digSpeedY * Time.deltaTime;
+		}
 
-			if (ant [0].name != "Pavement Ant") { // if front ant is not Pavement Ant, slow down movement
-				moveY = moveY / 2;
-			}
+		else if (antlionCharacter.transform.position.y < maxDepth - bufferSpace) {
+			moveY = digSpeedY * Time.deltaTime;
+		}
 
-			ant [i].transform.Translate (new Vector3 (0f, moveY, 0f));
+		else {
+			moveY = 0;
+		}
+
+		antlionCharacter.transform.Translate (0f, moveY, 0f);
+	}
+
+	private void antlionCharacterignoreGroundColliders (bool ignore) {
+		Collider2D[] groundColliders = ground.GetComponentsInChildren<Collider2D> ();
+
+		for (int i = 0; i < groundColliders.Length; i++) {
+			Physics2D.IgnoreCollision (antlionCharacter.GetComponent<Collider2D> (), groundColliders [i], ignore);
+		}
+		Rigidbody2D rb = antlionCharacter.GetComponent<Rigidbody2D> ();
+		if (ignore) {
+			rb.gravityScale = 0f;
+			rb.freezeRotation = true;
+		} 
+
+		else {
+			rb.gravityScale = 1f;
+			rb.freezeRotation = false;
 		}
 	}
-	*/
 
 	private void initializeIgnoreColliders () {
 		Collider2D coll = GetComponent<Collider2D> ();
@@ -116,12 +159,12 @@ public class AntlionBehavior : MonoBehaviour {
 	}
 
 	public void setEating(bool isEating) {
-		eating = isEating;
+		stalled = isEating;
 		countDownTimer = eatingTime;
 	}
 
 	public bool isEating() {
-		return eating;
+		return stalled;
 	}
 
 	public void enableAntlionCharacterCollider(GameObject thrownObject) {
@@ -142,7 +185,11 @@ public class AntlionBehavior : MonoBehaviour {
 		stopAntAnimations ();
 	}
 
-	public void stopAntAnimations () {
+	private void stopAntAnimations () {
 		antlionCharacter.GetComponent<Animator> ().Stop ();
+	}
+
+	private void startAntAnimations () {
+		//antlionCharacter.GetComponent<Animator> ().Play ("RUN");
 	}
 }

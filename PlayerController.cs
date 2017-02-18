@@ -24,6 +24,7 @@ public class PlayerController : MonoBehaviour {
 	private float digStartX = 0f; // the x position where ants should start digging
 	private float digEndX = 0f; // the x position where ants should start surfacing
 	private int score = 0; 	// used to store the score 
+	private float bufferSpace = 0.1f; // gives ants a certain range of space they are allowed to be within
 
 	public float digSpeedY = 5f;
 	public float digDepth = 3f;
@@ -182,7 +183,6 @@ public class PlayerController : MonoBehaviour {
 	private void dig() {
 		float moveY = 0f;
 		float maxDepth = transform.position.y - digDepth;
-
 		for (int i = 0; i < ant.Count; i++) {
 			if (ant[i].transform.position.x >= digStartX && ant [i].transform.position.y > maxDepth) {
 				moveY = -digSpeedY * Time.deltaTime;
@@ -245,7 +245,6 @@ public class PlayerController : MonoBehaviour {
 		
 	// Purpose: checks and moves ants to their ordered positions in a straight line, and appends trowable objects at very back 
 	private void positionAnts() {
-		float bufferSpace = 0.1f; // gives ants a certain range of space they are allowed to be within
 		bool leadAntStuck = false;
 		if (!allAntsEaten ()) {
 			leadAntStuck = ant [0].GetComponent<AntCollider> ().isStuck ();
@@ -471,15 +470,40 @@ public class PlayerController : MonoBehaviour {
 
 	public void startMovement() {
 		start = true;
+		playAntAnimations ();
 	}
 
 	public void stopMovement() {
 		start = false;
+		stopAntAnimations ();
 	}
 
-	public void stopAntAnimations () {
+	private void stopAntAnimations () {
 		for (int i = 0; i < ant.Count; i++) {
 			ant [i].GetComponent<Animator> ().Stop ();
 		}
+	}
+
+	private void playAntAnimations () {
+		for (int i = 0; i < ant.Count; i++) {
+			//ant [i].GetComponent<Animator> ().StartPlayback();//Play ("Base Layer RUN");
+		}
+	}
+
+	public bool lastAntDigging() {
+		bool isDigging = false;
+		if (ant [ant.Count - 1].transform.position.y <= transform.position.y - digDepth + bufferSpace &&
+			ant [ant.Count - 1].transform.position.y >= transform.position.y - digDepth - bufferSpace) {
+			isDigging = true;
+		}
+		return isDigging;
+	}
+
+	public float getDigDepth() {
+		return digDepth;
+	}
+
+	public float positionYLastAnt() {
+		return ant [ant.Count - 1].transform.position.y;
 	}
 }

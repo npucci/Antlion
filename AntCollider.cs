@@ -23,10 +23,14 @@ public class AntCollider : MonoBehaviour {
 
 	private void OnCollisionStay2D(Collision2D coll) {
 		string collName = coll.gameObject.name;
-		if (collName.Contains("Tree Obstacle") || collName.Contains("Rock Obstacle") || collName.Contains("Throwable Obstacle")) {
+		if (collName.Contains ("Rock Obstacle") || collName.Contains ("Throwable Obstacle")) {
 			if (transform.position.y >= coll.gameObject.transform.position.y - 2f) {
 				blockingObstacleColl = coll.gameObject.GetComponent<Collider2D> ();
 			}
+		} 
+
+		else if (collName.Contains ("Tree Obstacle")) {
+			blockingObstacleColl = coll.gameObject.GetComponent<Collider2D> ();
 		}
 	}
 
