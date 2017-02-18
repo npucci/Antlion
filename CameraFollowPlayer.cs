@@ -12,7 +12,7 @@ using UnityEngine;
 public class CameraFollowPlayer : MonoBehaviour {
 	private Transform player; // keeps track of Player position
 
-	public float adjustY = -0.5f; // adjusts camera to a better position on the y axis 
+	public float adjustY = 0.88f; // adjusts camera to a better position on the y axis 
 
 	void Start () {
 		player = GameObject.Find ("Player").GetComponent<Transform> ();
@@ -20,8 +20,6 @@ public class CameraFollowPlayer : MonoBehaviour {
 	}
 
 	void Update () {
-		//if(!player.GetComponent<PlayerController>().allAntsEaten()) {
 		transform.position = new Vector3 (player.position.x, player.position.y + adjustY, transform.position.z); // adjust camera lower
-		//}
 	}
 }

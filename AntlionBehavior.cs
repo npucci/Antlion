@@ -11,11 +11,13 @@ public class AntlionBehavior : MonoBehaviour {
 	private Animator animator;
 	private float countDownTimer = 0f;
 	private bool gameOver = false;
+	private bool start = false;
 
 	public float eatingTime = 2f;
 
 	void Start () {
 		antlionCharacter = transform.GetChild (0).gameObject;
+		initializePositionAntlionCharacter ();
 		player = GameObject.Find ("Player").GetComponent<Transform> ().gameObject;
 		ground = GameObject.Find ("Ground").GetComponent<Transform>().gameObject;
 		initializeIgnoreColliders (); 
@@ -24,35 +26,35 @@ public class AntlionBehavior : MonoBehaviour {
 	}
 
 	void Update () {
-		if (player.GetComponent<PlayerController> ().allAntsEaten ()) {
-			gameOver = true;
-		}
-
-		Vector3 playerLastAnt = Vector3.zero;
-
-		if (!eating && !gameOver) {
-			playerLastAnt = player.GetComponent<PlayerController> ().getLastAntPosition();
-
-			if (playerLastAnt [1] < transform.position.y) {
-				//dig ();
+		if (start) {
+			if (player.GetComponent<PlayerController> ().allAntsEaten ()) {
+				gameOver = true;
 			}
 
-			else if (playerLastAnt[1] > transform.position.y)
-				
-			transform.Translate (new Vector3 (speedX * Time.deltaTime, 0f, 0f));
-			moveAntlion ();
-		}
+			Vector3 playerLastAnt = Vector3.zero;
 
-		if (countDownTimer > 0 && !gameOver) {
-			countDownTimer = countDownTimer - Time.deltaTime;
-		} 
+			if (!eating && !gameOver) {
+				playerLastAnt = player.GetComponent<PlayerController> ().getLastAntPosition ();
 
-		else {
-			eating = false;
+				if (playerLastAnt [1] < transform.position.y) {
+					//dig ();
+				} 
+
+				else if (playerLastAnt [0] > transform.position.x) {
+					transform.Translate (new Vector3 (speedX * Time.deltaTime, 0f, 0f));
+					moveAntlionCharacter ();
+				}
+			}
+
+			if (countDownTimer > 0 && !gameOver) {
+				countDownTimer = countDownTimer - Time.deltaTime;
+			} else {
+				eating = false;
+			}
 		}
 	}
 
-	private void moveAntlion() {
+	private void moveAntlionCharacter() {
 		float bufferSpace = 0.2f;
 		if (antlionCharacter.transform.position.x < transform.position.x - bufferSpace) {
 			antlionCharacter.transform.Translate (new Vector3 (speedX * Time.deltaTime, 0f, 0f));
@@ -92,10 +94,12 @@ public class AntlionBehavior : MonoBehaviour {
 
 		GameObject[] allGameObjects = UnityEngine.Object.FindObjectsOfType<GameObject> ();
 		for (int i = 0; i<  allGameObjects.Length; i++) {
+			// disable collisions for parent colllider
 			if (allGameObjects[i].activeInHierarchy) {
 				Physics2D.IgnoreCollision (coll, allGameObjects[i].GetComponent<Collider2D> (), true);
 			}
-			if (allGameObjects[i].activeInHierarchy && !allGameObjects[i].name.Contains("Ant")) {
+			// disable collision for antlion character collider
+			if (allGameObjects[i].activeInHierarchy && (allGameObjects[i].name.Contains("Ant Hill") || !allGameObjects[i].name.Contains("Ant"))) {
 				Physics2D.IgnoreCollision (collAntlion, allGameObjects[i].GetComponent<Collider2D>(), true);
 			}
 		}
@@ -123,5 +127,22 @@ public class AntlionBehavior : MonoBehaviour {
 	public void enableAntlionCharacterCollider(GameObject thrownObject) {
 		Collider2D antlionColl = antlionCharacter.GetComponent<Collider2D> ();
 		Physics2D.IgnoreCollision (antlionColl, thrownObject.GetComponent<Collider2D>(), false);
+	}
+
+	private void initializePositionAntlionCharacter() {
+		antlionCharacter.transform.position = transform.position;
+	}
+
+	public void startMovement() {
+		start = true;
+	}
+
+	public void stopMovement() {
+		start = false;
+		stopAntAnimations ();
+	}
+
+	public void stopAntAnimations () {
+		antlionCharacter.GetComponent<Animator> ().Stop ();
 	}
 }
