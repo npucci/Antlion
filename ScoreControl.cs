@@ -8,13 +8,15 @@ public class ScoreControl : MonoBehaviour {
 
 	private int speedBoostsAvailable = 0; // power up
 	private float speedBoost = 2.0f;
-	private float boostTimer = 2.0f; // times power up
+	public float boostTimer = 5.0f; // times power up
 	private float boostCountDown = 0f; // stores current timing of timer
 
 	private int scoreMultiplier = 2; // power up
 	private int currentScoreMultiplier = 1;
-	private float multiplierTimer = 2f; // times power up
+	public float multiplierTimer = 5f; // times power up
 	private float multiplierCountDown = 0f; // stores current timing of timer
+
+	private AudioSource itemCollectSound;
 
 	public Text hudShowScore; //the number showed in the UI HUD Canvas
 	public Text hudShowMultiplier;
@@ -26,6 +28,7 @@ public class ScoreControl : MonoBehaviour {
 	// Use this for initialization
 	void Start () {
 		score = 0;	//set the original score to be 0
+		itemCollectSound = GetComponent<AudioSource>();
 		updateTexts();
 	}
 
@@ -47,6 +50,7 @@ public class ScoreControl : MonoBehaviour {
 	}
 
 	public void incrementScore(string itemName) {
+		itemCollectSound.Play (); 
 		// apple == 3 points
 		if (itemName.Contains ("Apple Item")) {
 			score += 3 * currentScoreMultiplier;

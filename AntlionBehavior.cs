@@ -7,6 +7,7 @@ public class AntlionBehavior : MonoBehaviour {
 	private GameObject player;
 	private GameObject ground; // for referencing collissions with the ground
 	private bool stalled = false;
+	private bool eating = false;
 	private Animator animator;
 	private float countDownTimer = 0f;
 	private bool gameOver = false;
@@ -39,7 +40,7 @@ public class AntlionBehavior : MonoBehaviour {
 
 			Vector3 playerLastAnt = Vector3.zero;
 
-			if (!stalled && !gameOver) {
+			if (!stalled && !eating && !gameOver) {
 				playerLastAnt = player.GetComponent<PlayerController> ().getLastAntPosition ();
 
 				if (player.GetComponent<PlayerController> ().lastAntDigging ()) {
@@ -69,6 +70,8 @@ public class AntlionBehavior : MonoBehaviour {
 
 			else {
 				stalled = false;
+				eating = false;
+				animator.Play ("Antlion_Run");
 			}
 		}
 	}
@@ -84,7 +87,6 @@ public class AntlionBehavior : MonoBehaviour {
 	}
 		
 	private bool toSurface() {
-		//Debug.Log ("here");
 		if (antlionCharacter.transform.position.y < transform.position.y) {
 			antlionCharacter.transform.Translate (new Vector3 (0f, digSpeedY * Time.deltaTime, 0f));
 			return false;
@@ -153,11 +155,22 @@ public class AntlionBehavior : MonoBehaviour {
 	}
 
 	public void setEating(bool isEating) {
-		stalled = isEating;
+		animator.Play ("Antlion_Eat");
+		eating = isEating;
+		countDownTimer = eatingTime;
+	}
+
+	public void setStalled(bool isStalled) {
+		animator.Play ("Antlion_Stunned");
+		stalled = isStalled;
 		countDownTimer = eatingTime;
 	}
 
 	public bool isEating() {
+		return eating;
+	}
+
+	public bool isStalled() {
 		return stalled;
 	}
 
@@ -181,14 +194,20 @@ public class AntlionBehavior : MonoBehaviour {
 
 	public void stopMovement() {
 		start = false;
-		stopAntAnimations ();
+		if (player.GetComponent<PlayerController> ().allAntsEaten ()) {
+			stopAnimations ();
+		} 
+
+		else {
+			animator.Play ("Antlion_Dead");
+		}
 	}
 
-	private void stopAntAnimations () {
+	private void stopAnimations () {
 		antlionCharacter.GetComponent<Animator> ().Stop ();
 	}
 
-	private void startAntAnimations () {
+	private void startAnimations () {
 		//antlionCharacter.GetComponent<Animator> ().Play ("RUN");
 	}
 }

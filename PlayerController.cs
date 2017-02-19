@@ -167,7 +167,6 @@ public class PlayerController : MonoBehaviour {
 			}
 
 			if (!allAntsEaten () && moveLeftButton) {
-				Debug.Log ("here");
 				moveX = moveX / 3; // slow down to a third the pace
 			} 
 
@@ -265,6 +264,7 @@ public class PlayerController : MonoBehaviour {
 		bool fireAntExists = false;
 		Vector3 fireAntPosition = Vector3.zero;
 
+		// position for when the player is not stuck at an obstacle
 		for (int i = 0; i < ant.Count && !leadAntStuck; i++) {
 			float idealDistanceX = (transform.position.x - (distanceBetweenAnts * i)); // calculates the ideal x distance of each ant, relative to its parent Player
 
@@ -283,9 +283,8 @@ public class PlayerController : MonoBehaviour {
 				fireAntPosition = ant [i].transform.position;
 				fireAntExists = true;
 			}
-
 		}
-
+			
 		// move throwable object to position of fire ant, if it exists
 		if (throwableObject != null && fireAntExists) {
 			throwableObject.GetComponent<SpriteRenderer> ().flipY = true;
@@ -373,7 +372,7 @@ public class PlayerController : MonoBehaviour {
 	private void swapAnts() {
 		if (ant.Count > 1) {
 			GameObject antTemp = ant [0]; // stores the lead ant to be moved
-			ant[0].GetComponent<Rigidbody2D>().isKinematic = false;
+			//ant[0].GetComponent<Rigidbody2D>().isKinematic = false;
 			ant.Remove (ant[0]); // takes lead ant off the List 
 			ant.Add (antTemp); // places lead ant at the back of List
 		}
@@ -499,9 +498,9 @@ public class PlayerController : MonoBehaviour {
 	}
 
 	private void playAntAnimations () {
-		for (int i = 0; i < ant.Count; i++) {
+		//for (int i = 0; i < ant.Count; i++) {
 			//ant [i].GetComponent<Animator> ().StartPlayback();//Play ("Base Layer RUN");
-		}
+		//}
 	}
 
 	public bool lastAntDigging() {

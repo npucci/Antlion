@@ -28,7 +28,7 @@ public class AntlionCollider : MonoBehaviour {
 	
 		else if (!gameOver && coll.gameObject.name.Contains ("Throwable Obstacle")) {
 			if (coll.gameObject.GetComponent<Rigidbody2D> ().velocity.x <= 0) {
-				antlion.setEating (true);
+				antlion.setStalled (true);
 				antlion.GetComponent<AntlionBehavior> ().disableAntlionCharacterCollider (coll.gameObject);
 				coll.gameObject.GetComponent<Rigidbody2D> ().AddForce (new Vector2 (2f, 2f), ForceMode2D.Impulse);
 			}

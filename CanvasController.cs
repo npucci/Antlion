@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
+using UnityEngine.SceneManagement;
 
 public class CanvasController : MonoBehaviour {
 	private CanvasGroup pauseCanvas;
@@ -113,6 +114,6 @@ public class CanvasController : MonoBehaviour {
 	}
 
 	public void restartLevel() {
-		Application.LoadLevel (1);
+		Application.LoadLevel (SceneManager.GetActiveScene().buildIndex);
 	}
 }

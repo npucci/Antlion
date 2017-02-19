@@ -42,6 +42,10 @@ public class AntCollider : MonoBehaviour {
 		if (collName.Contains("Tree Obstacle") || collName.Contains("Rock Obstacle") || collName.Contains("Throwable Obstacle")) {
 			blockingObstacleColl = null;
 		}
+
+		else if (blockingObstacleColl != null && blockingObstacleColl.Equals(coll)) {
+			blockingObstacleColl = null;
+		}
 	}
 
 	public bool isStuck() {
@@ -50,5 +54,13 @@ public class AntCollider : MonoBehaviour {
 		
 	public Collider2D getBlocingObstacleColl() {
 		return blockingObstacleColl;
+	}
+
+	public void receiveBlocingObstacleColl(Collider2D coll) {
+		blockingObstacleColl = coll;
+	}
+
+	public void clearBlockingObstacleColl() {
+		blockingObstacleColl = null;
 	}
 }

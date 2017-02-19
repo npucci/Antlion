@@ -10,21 +10,21 @@ public class StartScene : MonoBehaviour {
 	private bool jumpflag=false;
 
 
-	private void StartGame(){
-		Application.LoadLevel (1);//change the variable according to your build settings^^
+	private void StartGame(int i){
+		Application.LoadLevel (i);//change the variable according to your build settings^^
 	}
 
 	public void EasyMode(){
 		Level = LEVEL.EASY;
-		StartGame ();
+		StartGame (1);
 	}
 	public void NormalMode(){
 		Level = LEVEL.NORMAL;
-		StartGame ();
+		StartGame (2);
 	}
 	public void HardMode(){
 		Level = LEVEL.HARD;
-		StartGame ();
+		StartGame (3);
 	}
 
 	public void QuitButton()
